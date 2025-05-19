@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Update-PortainerStacks</title>
+    <!-- Bootstrap 5 CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .theme-switch {
+            padding: 0.4rem 0.75rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .theme-switch:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        body[data-bs-theme="dark"] .theme-switch:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+
+<body class="bg-dark text-light" data-bs-theme="dark">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-secondary">
+        <div class="container-fluid">
+            <!-- Logo -->
+            <a class="navbar-brand" href="stacks.html">
+                <i class="fas fa-ship me-2 text-primary"></i>
+                <span class="fw-bold">Update-PortainerStacks</span>
+            </a>
+
+            <!-- Toggler for mobile -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#topNavbar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Menu -->
+            <div class="collapse navbar-collapse justify-content-end" id="topNavbar">
+                <ul class="navbar-nav align-items-center">
+                    <li class="nav-item mx-2">
+                        <a class="nav-link active d-flex align-items-center" href="stacks.html">
+                            <i class="fas fa-box me-1"></i>
+                            <span>Stacks</span>
+                        </a>
+                    </li>
+                    <li class="nav-item mx-2">
+                        <a class="nav-link d-flex align-items-center" href="logs.html">
+                            <i class="fas fa-scroll me-1"></i>
+                            <span>Logs</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Content -->
+    <div class="container py-4">
+        <h2 class="mb-4 text-center">📦 Portainer Stacks</h2>
+
+        <!-- Stacks Table -->
+        <div class="card bg-dark border-light mb-5">
+            <div class="card-body">
+                <table class="table table-dark table-striped table-hover mb-0">
+                    <thead class="table-secondary text-dark">
+                        <tr>
+                            <th>Stack</th>
+                            <th>Update Status</th>
+                            <th>Update Policy</th>
+                            <th>Last Updated</th>
+                            <th>Created</th>
+                            <th>Stack Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stacks-table">
+                        <tr>
+                            <td colspan="5" class="text-center py-5">Loading stacks data...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Dashboard Logic -->
+    <script>
+        // Add this before your loadStacks function
+        function getStatusBadge(status) {
+            const statusNum = parseInt(status);
+
+            let badgeClass = 'secondary';
+            let icon = 'question-circle';
+            let label = 'Unknown';
+
+            if (statusNum === 1) {
+                badgeClass = 'success';
+                icon = 'check-circle';
+                label = 'Active';
+            } else if (statusNum === 2) {
+                badgeClass = 'warning';
+                icon = 'times-circle';
+                label = 'Inactive';
+            }
+
+            return `
+    <span class="badge rounded-pill text-bg-${badgeClass} d-inline-flex align-items-center">
+      <i class="fas fa-${icon} me-1"></i>
+      <span>${label}</span>
+    </span>
+  `;
+        }
+
+        function getUpdateBadge(updateStatus) {
+            // Handle edge cases
+            if (!updateStatus) {
+                return `
+      <span class="badge rounded-pill text-bg-secondary d-inline-flex align-items-center">
+        <i class="fas fa-spinner me-1 fa-spin"></i>
+        <span>Loading...</span>
+      </span>
+    `;
+            }
+
+            if (!updateStatus.Status) {
+                return `
+      <span class="badge rounded-pill text-bg-secondary d-inline-flex align-items-center">
+        <i class="fas fa-question-circle me-1"></i>
+        <span>Unknown</span>
+      </span>
+    `;
+            }
+
+            let badgeClass = 'secondary';
+            let icon = 'question-circle';
+            let label = updateStatus.Status;
+            let message = updateStatus.Message;
+
+            switch (updateStatus.Status.toLowerCase()) {
+                case 'updated':
+                    badgeClass = 'success';
+                    icon = 'check-circle';
+                    label = 'Up 2 Date';
+                    break;
+                case 'outdated':
+                    badgeClass = 'danger';
+                    icon = 'exclamation-circle';
+                    label = 'Outdated';
+                    break;
+                case 'skipped':
+                    badgeClass = 'secondary';
+                    icon = 'minus-circle';
+                    label = 'Skipped';
+                    break;
+                default:
+                    badgeClass = 'warning';
+                    icon = 'question-circle';
+                    label = 'Unknown';
+            }
+
+            // Don't show empty messages
+            if (!message || message.trim() === '') {
+                return `
+        <span class="badge rounded-pill text-bg-${badgeClass} d-inline-flex align-items-center">
+          <i class="fas fa-${icon} me-1"></i>
+          <span>${label}</span>
+        </span>
+      `;
+            }
+
+            // Show messages with tooltip
+            return `
+        <div class="d-flex align-items-center">
+          <span class="badge rounded-pill text-bg-${badgeClass} d-inline-flex align-items-center me-2" style="white-space: nowrap;">
+            <i class="fas fa-${icon} me-1"></i>
+            <span>${label}</span>
+          </span>
+          <small class="text-muted fst-italic" title="${message}" style="cursor: help; max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
+            ${message}
+          </small>
+        </div>
+      `;
+        }
+
+        // Format date
+        function formatDate(dateStr) {
+            try {
+                // If it's a number or numeric string, treat as Unix timestamp (seconds)
+                const isUnixTS = !isNaN(dateStr) || (typeof dateStr === 'string' && /^\d+$/.test(dateStr));
+
+                if (isUnixTS) {
+                    // Convert seconds to milliseconds
+                    const timestampMs = parseInt(dateStr) * 1000;
+                    return new Date(timestampMs).toLocaleString();
+                }
+
+                // For ISO date strings and other valid date formats
+                return new Date(dateStr).toLocaleString();
+            } catch (e) {
+                return 'N/A';
+            }
+        }
+
+        // Get stack update status for a specific stack
+        async function fetchStackUpdateStatus(stackId) {
+            try {
+                const response = await fetch('/api/stack-update-status', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        StackID: stackId
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to fetch update status');
+                }
+
+                return data.data;
+            } catch (error) {
+                console.error('Error fetching update status for stack', stackId, error);
+                return null;
+            }
+        }
+
+        // Add a delay helper function
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // Load stacks data with throttled status requests
+        async function loadStacks() {
+            try {
+                // Clear any previous error messages
+                document.getElementById('stacks-table').innerHTML = `
+            <tr><td colspan="6" class="text-center py-5">Loading stacks data...</td></tr>
+        `;
+
+                // Get stacks data
+                const response = await fetch('/api/stacks');
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to fetch stack data');
+                }
+
+                if (!data.data || data.data.length === 0) {
+                    document.getElementById('stacks-table').innerHTML = `
+                <tr><td colspan="6" class="text-center py-5 text-bg-info">
+                No stacks found
+                </td></tr>`;
+                    return;
+                }
+
+                // Create table with loading placeholders first
+                const tableHTML = data.data.map(stack => `
+            <tr class="align-middle">
+                <td><strong>${stack.Name}</strong></td>
+                <td id="status-${stack.Id}" class="status-cell" data-stack-id="${stack.Id}">
+                ${getUpdateBadge()} <!-- Loading badge -->
+                </td>
+                <td>${stack.UpdatePolicy || 'N/A'}</td>
+                <td>${formatDate(stack.UpdateDate)}</td>
+                <td>${formatDate(stack.CreationDate)}</td>
+                <td>${getStatusBadge(stack.Status)}</td>
+            </tr>
+        `).join('');
+
+                document.getElementById('stacks-table').innerHTML = tableHTML;
+
+                // Configure throttling (adjust these values!)
+                const REQUEST_DELAY_MS = 500;  // Delay between requests
+                const MAX_CONCURRENT_REQUESTS = 1;  // Only 1 at a time for serial execution
+
+                // Process status updates one-by-one with delay
+                for (let i = 0; i < data.data.length; i++) {
+                    const stack = data.data[i];
+
+                    // Fetch status for this stack
+                    const statusData = await fetchStackUpdateStatus(stack.Id);
+
+                    // Update UI
+                    const cell = document.getElementById(`status-${stack.Id}`);
+                    if (cell) {
+                        cell.innerHTML = getUpdateBadge(statusData || {
+                            Status: 'error',
+                            Message: 'Failed to load status'
+                        });
+                    }
+
+                    // Add delay before next request (except after last one)
+                    if (i < data.data.length - 1) {
+                        await sleep(REQUEST_DELAY_MS);
+                    }
+                }
+
+            } catch (error) {
+                console.error('Error fetching stacks:', error);
+                document.getElementById('stacks-table').innerHTML = `
+            <tr><td colspan="6" class="text-center py-5 text-bg-danger">
+            Error loading stacks: ${error.message}
+            </td></tr>`;
+            }
+        }
+        
+        // Initial load
+        window.addEventListener('load', loadStacks);
+    </script>
+</body>
+
+</html>
