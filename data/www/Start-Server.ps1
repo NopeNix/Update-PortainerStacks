@@ -19,22 +19,35 @@ Start-PodeServer -Verbose {
     # Stacks API
     Add-PodeRoute -Method Get -Path "/api/stacks" -ScriptBlock {
         . ($PSScriptRoot + "/../functions.ps1")
+        # Get Token
         try {
             $Bearer = Get-BearerToken
-            $stats = Get-Stacks
-            Disconnect-Token
-            Write-PodeJsonResponse -Value @{
-                success = $true
-                data = $stats
+
+            # Get Stacks
+            try {
+                $stats = Get-Stacks
+                Disconnect-Token
+                Write-PodeJsonResponse -Value @{
+                    success = $true
+                    data    = $stats
+                }
+            }
+            catch {
+                Write-PodeJsonResponse -Value @{
+                    success = $false
+                    error   = ("Was not able to get Stacks. " + $_.Exception.Message)
+                } -StatusCode 500
             }
         }
         catch {
             Write-PodeJsonResponse -Value @{
                 success = $false
-                error = ("<pre align='left'>" + ( $_.Exception | ConvertTo-Json -Depth 1) + "</pre>")
+                error   = ("Was not able to get a JWT Token. " + $_.Exception.Message)
             } -StatusCode 500
         }
     }
+        
+        
     
     # StackUpdateStatus API
     Add-PodeRoute -Method Post -Path "/api/stack-update-status" -ScriptBlock {
@@ -45,13 +58,13 @@ Start-PodeServer -Verbose {
             Disconnect-Token
             Write-PodeJsonResponse -Value @{
                 success = $true
-                data = $StackUpdateStatus
+                data    = $StackUpdateStatus
             }
         }
         catch {
             Write-PodeJsonResponse -Value @{
-                success = $false
-                error = $_.Exception.Message
+                success      = $false
+                error        = $_.Exception.Message
                 requested_id = $WebEvent.Data.StackID
             } -StatusCode 500
         }
