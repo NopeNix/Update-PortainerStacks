@@ -46,7 +46,7 @@ function Update-Stack {
     $Body = $Body | ConvertTo-Json
 
     try {
-        Invoke-RestMethod ($env:PortainerBaseAddress + "/api/stacks/" + $stack.id + "?endpointId=" + $Stack.EndpointId) -AllowUnencryptedAuthentication -Authentication Bearer -Token ($Bearer | ConvertTo-SecureString -AsPlainText) -Body $Body -Method Put -ErrorAction Stop | Out-Null
+        Invoke-RestMethod ($env:PortainerBaseAddress + "/api/portainer/stacks/" + $stack.id + "?endpointId=" + $Stack.EndpointId) -AllowUnencryptedAuthentication -Authentication Bearer -Token ($Bearer | ConvertTo-SecureString -AsPlainText) -Body $Body -Method Put -ErrorAction Stop | Out-Null
     }
     catch {
         Write-Error ("Update not possible: " + $_.Exception.Message)
@@ -54,9 +54,9 @@ function Update-Stack {
 }
 
 function Get-Stacks {
-    $Stacks = Invoke-RestMethod -SkipCertificateCheck ($env:PortainerBaseAddress + "/api/stacks") -AllowUnencryptedAuthentication -Authentication Bearer -Token ($Bearer | ConvertTo-SecureString -AsPlainText) -Method Get -ErrorAction Stop
+    $Stacks = Invoke-RestMethod -SkipCertificateCheck ($env:PortainerBaseAddress + "/api/portainer/stacks") -AllowUnencryptedAuthentication -Authentication Bearer -Token ($Bearer | ConvertTo-SecureString -AsPlainText) -Method Get -ErrorAction Stop
     $Stacks = $Stacks | ForEach-Object {
-        $StackFileContent = (Invoke-RestMethod -SkipCertificateCheck ($env:PortainerBaseAddress + "/api/stacks/" + $_.id + "/file") -AllowUnencryptedAuthentication -Authentication Bearer -Token ($Bearer | ConvertTo-SecureString -AsPlainText) -Method get -ErrorAction stop -ContentType "application/json").StackFileContent
+        $StackFileContent = (Invoke-RestMethod -SkipCertificateCheck ($env:PortainerBaseAddress + "/api/portainer/stacks/" + $_.id + "/file") -AllowUnencryptedAuthentication -Authentication Bearer -Token ($Bearer | ConvertTo-SecureString -AsPlainText) -Method get -ErrorAction stop -ContentType "application/json").StackFileContent
         $_ | Add-Member -NotePropertyName "StackFileContent" -NotePropertyValue $StackFileContent -Force
             
         if ($StackFileContent -imatch "#UpdatePolicy=AutoUpdate") {
@@ -90,10 +90,10 @@ function Get-StackUpdateStatus {
 
     switch ($PSCmdlet.ParameterSetName) {
         'Stack' {
-            $Status = Invoke-RestMethod -SkipCertificateCheck ($env:PortainerBaseAddress + "/api/stacks/" + $Stack.Id + "/images_status?refresh=1") -AllowUnencryptedAuthentication -Authentication Bearer -Token ($Bearer | ConvertTo-SecureString -AsPlainText) -Method Get -ErrorAction Stop
+            $Status = Invoke-RestMethod -SkipCertificateCheck ($env:PortainerBaseAddress + "/api/portainer/stacks/" + $Stack.Id + "/images_status?refresh=1") -AllowUnencryptedAuthentication -Authentication Bearer -Token ($Bearer | ConvertTo-SecureString -AsPlainText) -Method Get -ErrorAction Stop
         }
         'StackID' {
-            $Status = Invoke-RestMethod -SkipCertificateCheck ($env:PortainerBaseAddress + "/api/stacks/" + $StackID + "/images_status?refresh=1") -AllowUnencryptedAuthentication -Authentication Bearer -Token ($Bearer | ConvertTo-SecureString -AsPlainText) -Method Get -ErrorAction Stop
+            $Status = Invoke-RestMethod -SkipCertificateCheck ($env:PortainerBaseAddress + "/api/portainer/stacks/" + $StackID + "/images_status?refresh=1") -AllowUnencryptedAuthentication -Authentication Bearer -Token ($Bearer | ConvertTo-SecureString -AsPlainText) -Method Get -ErrorAction Stop
         }
         default {
             Write-Error 'No valid parameter provided. Must specify either -Stack or -ID.'

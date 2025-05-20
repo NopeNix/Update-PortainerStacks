@@ -2,7 +2,7 @@ FROM mcr.microsoft.com/powershell:alpine-3.20
 
 # Install necessary packages
 RUN apk update && \
-apk add --no-cache supervisor 
+apk add --no-cache supervisor docker-cli
 RUN pwsh -c Install-Module Pode -Force
 
 # Create a working directory & copy the necessary files

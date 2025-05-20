@@ -16,40 +16,49 @@ Start-PodeServer -Verbose {
         Write-PodeHtmlResponse (Get-Content ($PSScriptRoot + "/html/logs.html") -Raw)
     }
     
-    # Stacks API
-    Add-PodeRoute -Method Get -Path "/api/stacks" -ScriptBlock {
-        . ($PSScriptRoot + "/../functions.ps1")
-        # Get Token
-        try {
-            $Bearer = Get-BearerToken
-
-            # Get Stacks
+    # Portainer: Stacks API
+    Add-PodeRoute -Method Get -Path "/api/portainer/stacks" -ScriptBlock {
+        if ($null -eq $env:PortainerBaseAddress -or $env:PortainerBaseAddress.trim() -eq "") {
+            Write-PodeJsonResponse -Value @{
+                        success = $false
+                        error   = ("Portainer Stacks is disabled because no PortainerBaseAddress was given")
+                    } -StatusCode 500
+        }
+        else {
+        
+            . ($PSScriptRoot + "/../functions.ps1")
+            # Get Token
             try {
-                $stats = Get-Stacks
-                Disconnect-Token
-                Write-PodeJsonResponse -Value @{
-                    success = $true
-                    data    = $stats
+                $Bearer = Get-BearerToken
+
+                # Get Stacks
+                try {
+                    $stats = Get-Stacks
+                    Disconnect-Token
+                    Write-PodeJsonResponse -Value @{
+                        success = $true
+                        data    = $stats
+                    }
+                }
+                catch {
+                    Write-PodeJsonResponse -Value @{
+                        success = $false
+                        error   = ("Was not able to get Stacks. " + $_.Exception.Message)
+                    } -StatusCode 500
                 }
             }
             catch {
                 Write-PodeJsonResponse -Value @{
                     success = $false
-                    error   = ("Was not able to get Stacks. " + $_.Exception.Message)
+                    error   = ("Was not able to get a JWT Token. " + $_.Exception.Message)
                 } -StatusCode 500
             }
-        }
-        catch {
-            Write-PodeJsonResponse -Value @{
-                success = $false
-                error   = ("Was not able to get a JWT Token. " + $_.Exception.Message)
-            } -StatusCode 500
         }
     }
         
         
     
-    # StackUpdateStatus API
+    # Portainer: StackUpdateStatus API
     Add-PodeRoute -Method Post -Path "/api/stack-update-status" -ScriptBlock {
         . ($PSScriptRoot + "/../functions.ps1")
         try {

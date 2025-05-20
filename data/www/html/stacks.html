@@ -277,7 +277,7 @@
         `;
 
                 // Get stacks data
-                const response = await fetch('/api/stacks');
+                const response = await fetch('/api/portainer/stacks');
                 const data = await response.json();
 
                 if (!data.success) {
