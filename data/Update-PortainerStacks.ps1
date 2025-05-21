@@ -21,7 +21,7 @@ catch {
 # Get All Stacks
 Write-Host ("Getting all Stacks...") -ForegroundColor Blue
 try {
-    $Stacks = Get-Stacks
+    $Stacks = Get-PortainerStacks
     Write-Host (" -> Got " + $Stacks.count + " ") -ForegroundColor Green
 }
 catch {
@@ -39,7 +39,7 @@ $Stacks | ForEach-Object {
     }
     if ($_.UpdatePolicy -eq "AutoUpdate" -or $_.UpdatePolicy -eq "OnlyNTFY") {
         try {
-            $Status = Get-StackUpdateStatus -Stack $CurrentObj
+            $Status = Get-PortainerStacksUpdateStatus -Stack $CurrentObj
     
             switch ($Status.Status) {
                 "skipped" { 

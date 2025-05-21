@@ -20,9 +20,9 @@ Start-PodeServer -Verbose {
     Add-PodeRoute -Method Get -Path "/api/portainer/stacks" -ScriptBlock {
         if ($null -eq $env:PortainerBaseAddress -or $env:PortainerBaseAddress.trim() -eq "") {
             Write-PodeJsonResponse -Value @{
-                        success = $false
-                        error   = ("Portainer Stacks is disabled because no PortainerBaseAddress was given")
-                    } -StatusCode 500
+                success = $false
+                error   = ("Portainer Stacks is disabled because no PortainerBaseAddress was given")
+            } -StatusCode 500
         }
         else {
         
@@ -33,7 +33,7 @@ Start-PodeServer -Verbose {
 
                 # Get Stacks
                 try {
-                    $stats = Get-Stacks
+                    $stats = Get-PortainerStacks
                     Disconnect-Token
                     Write-PodeJsonResponse -Value @{
                         success = $true
@@ -43,7 +43,7 @@ Start-PodeServer -Verbose {
                 catch {
                     Write-PodeJsonResponse -Value @{
                         success = $false
-                        error   = ("Was not able to get Stacks. " + $_.Exception.Message)
+                        error   = ("Was not able to get Portainer Stacks. " + $_.Exception.Message)
                     } -StatusCode 500
                 }
             }
@@ -56,14 +56,41 @@ Start-PodeServer -Verbose {
         }
     }
         
+    # Docker Compose: Stacks API
+    Add-PodeRoute -Method Get -Path "/api/docker-compose/stacks" -ScriptBlock {
+        docker ps | Out-Null
+        if ($? -eq $false) {
+            Write-PodeJsonResponse -Value @{
+                success = $false
+                error   = ("Docker Stacks is disabled because 'docker ps' resulted in an error")
+            } -StatusCode 500
+        }
+        else {
+            . ($PSScriptRoot + "/../functions.ps1")
         
+            # Get Stacks
+            try {
+                $stats = Get-DockerStacks
+                Write-PodeJsonResponse -Value @{
+                    success = $true
+                    data    = $stats
+                }
+            }
+            catch {
+                Write-PodeJsonResponse -Value @{
+                    success = $false
+                    error   = ("Was not able to get Docker Compose Stacks. " + $_.Exception.Message)
+                } -StatusCode 500
+            }
+        }
+    }
     
     # Portainer: StackUpdateStatus API
     Add-PodeRoute -Method Post -Path "/api/portainer/stack-update-status" -ScriptBlock {
         . ($PSScriptRoot + "/../functions.ps1")
         try {
             $Bearer = Get-BearerToken
-            $StackUpdateStatus = Get-StackUpdateStatus -StackID $WebEvent.Data.StackID
+            $StackUpdateStatus = Get-PortainerStacksUpdateStatus -StackID $WebEvent.Data.StackID
             Disconnect-Token
             Write-PodeJsonResponse -Value @{
                 success = $true

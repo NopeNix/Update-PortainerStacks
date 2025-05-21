@@ -53,7 +53,7 @@ function Update-Stack {
     }
 }
 
-function Get-Stacks {
+function Get-PortainerStacks {
     $Stacks = Invoke-RestMethod -SkipCertificateCheck ($env:PortainerBaseAddress + "/api/stacks") -AllowUnencryptedAuthentication -Authentication Bearer -Token ($Bearer | ConvertTo-SecureString -AsPlainText) -Method Get -ErrorAction Stop
     $Stacks = $Stacks | ForEach-Object {
         $StackFileContent = (Invoke-RestMethod -SkipCertificateCheck ($env:PortainerBaseAddress + "/api/stacks/" + $_.id + "/file") -AllowUnencryptedAuthentication -Authentication Bearer -Token ($Bearer | ConvertTo-SecureString -AsPlainText) -Method get -ErrorAction stop -ContentType "application/json").StackFileContent
@@ -67,7 +67,8 @@ function Get-Stacks {
         }
         elseif ($StackFileContent -imatch "#UpdatePolicy=OnlyNTFY") {
             $_ | Add-Member -NotePropertyName "UpdatePolicy" -NotePropertyValue "OnlyNTFY" -Force
-        } else {
+        }
+        else {
             $_ | Add-Member -NotePropertyName "UpdatePolicy" -NotePropertyValue $env:AutoUpdateDefaultMode -Force
         }
     
@@ -77,7 +78,34 @@ function Get-Stacks {
     Return $Stacks
 }
 
-function Get-StackUpdateStatus {
+function Get-DockerStacks {
+    $Stacks = (docker compose ls --format json | convertfrom-json)
+    $Stacks = $Stacks | ForEach-Object {
+        try {
+            $ComposeFile = (Get-Content $_.ConfigFiles -Raw)
+
+            if ($ComposeFile -imatch "#UpdatePolicy=AutoUpdate") {
+                $_ | Add-Member -NotePropertyName "UpdatePolicy" -NotePropertyValue "AutoUpdate" -Force
+            }
+            elseif ($ComposeFile -imatch "#UpdatePolicy=DoNotUpdate") {
+                $_ | Add-Member -NotePropertyName "UpdatePolicy" -NotePropertyValue "DoNotUpdate" -Force
+            }
+            elseif ($ComposeFile -imatch "#UpdatePolicy=OnlyNTFY") {
+                $_ | Add-Member -NotePropertyName "UpdatePolicy" -NotePropertyValue "OnlyNTFY" -Force
+            }
+            else {
+                $_ | Add-Member -NotePropertyName "UpdatePolicy" -NotePropertyValue $env:AutoUpdateDefaultMode -Force
+            }
+        }
+        catch {}
+        $_
+        
+    }
+    
+    Return $Stacks
+}
+
+function Get-PortainerStacksUpdateStatus {
     param (
         [Parameter(ParameterSetName = 'Stack', Mandatory = $true)]
         [PSCustomObject]

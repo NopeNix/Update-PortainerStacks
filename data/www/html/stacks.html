@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -16,17 +15,14 @@
             cursor: pointer;
             transition: all 0.2s ease-in-out;
         }
-
         .theme-switch:hover {
             background-color: rgba(255, 255, 255, 0.1);
         }
-
         body[data-bs-theme="dark"] .theme-switch:hover {
             background-color: rgba(255, 255, 255, 0.1);
         }
     </style>
 </head>
-
 <body class="bg-dark text-light" data-bs-theme="dark">
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-secondary">
@@ -36,12 +32,10 @@
                 <i class="fas fa-ship me-2 text-primary"></i>
                 <span class="fw-bold">Whale Mate</span>
             </a>
-
             <!-- Toggler for mobile -->
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#topNavbar">
                 <span class="navbar-toggler-icon"></span>
             </button>
-
             <!-- Menu -->
             <div class="collapse navbar-collapse justify-content-end" id="topNavbar">
                 <ul class="navbar-nav align-items-center">
@@ -61,11 +55,9 @@
             </div>
         </div>
     </nav>
-
     <!-- Page Content -->
     <div class="container py-4">
         <h2 class="mb-4 text-center">📦 Portainer Stacks</h2>
-
         <!-- Portainer Stacks Table -->
         <div class="card bg-dark border-light mb-5">
             <div class="card-body">
@@ -80,9 +72,9 @@
                             <th>Stack Status</th>
                         </tr>
                     </thead>
-                    <tbody id="stacks-table">
+                    <tbody id="portainer-stacks-table">
                         <tr>
-                            <td colspan="5" class="text-center py-5">Loading stacks data...</td>
+                            <td colspan="6" class="text-center py-5">Loading stacks data...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -90,8 +82,7 @@
         </div>
     </div>
     <div class="container py-4">
-        <h2 class="mb-4 text-center"><i class="fas fa-ship me-2 text-primary"></i> Docker Stacks</h2>
-
+        <h2 class="mb-4 text-center"><i class="fas fa-ship me-2 text-primary"></i> Docker Compose Stacks</h2>
         <!-- Docker Stacks Table -->
         <div class="card bg-dark border-light mb-5">
             <div class="card-body">
@@ -101,34 +92,29 @@
                             <th>Stack</th>
                             <th>Update Status</th>
                             <th>Update Policy</th>
-                            <th>Last Updated</th>
-                            <th>Created</th>
+                            <th>Config Files</th>
                             <th>Stack Status</th>
                         </tr>
                     </thead>
-                    <tbody id="stacks-table">
+                    <tbody id="docker-stacks-table">
                         <tr>
-                            <td colspan="6" class="text-center py-6">Loading stacks data...</td>
+                            <td colspan="5" class="text-center py-5">Loading stacks data...</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
-
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
     <!-- Dashboard Logic -->
     <script>
-        // Add this before your loadStacks function
+        // Function for Portainer status badge
         function getStatusBadge(status) {
             const statusNum = parseInt(status);
-
             let badgeClass = 'secondary';
             let icon = 'question-circle';
             let label = 'Unknown';
-
             if (statusNum === 1) {
                 badgeClass = 'success';
                 icon = 'check-circle';
@@ -138,7 +124,6 @@
                 icon = 'times-circle';
                 label = 'Inactive';
             }
-
             return `
     <span class="badge rounded-pill text-bg-${badgeClass} d-inline-flex align-items-center">
       <i class="fas fa-${icon} me-1"></i>
@@ -146,7 +131,29 @@
     </span>
   `;
         }
-
+        // Function for Docker Compose status badge
+        function getDockerStatusBadge(status) {
+            let badgeClass = 'secondary';
+            let icon = 'question-circle';
+            let label = 'Unknown';
+            if (status && status.startsWith('running(')) {
+                badgeClass = 'success';
+                icon = 'check-circle';
+                const count = status.match(/running\((\d+)\)/)?.[1] || '?';
+                label = `Running (${count})`;
+            } else if (status === null || status === 'null' || !status) {
+                badgeClass = 'danger';
+                icon = 'times-circle';
+                label = 'Stopped';
+            }
+            return `
+    <span class="badge rounded-pill text-bg-${badgeClass} d-inline-flex align-items-center">
+      <i class="fas fa-${icon} me-1"></i>
+      <span>${label}</span>
+    </span>
+  `;
+        }
+        // Function for update status badge
         function getUpdateBadge(updateStatus) {
             // Handle edge cases
             if (!updateStatus) {
@@ -157,7 +164,6 @@
       </span>
     `;
             }
-
             if (!updateStatus.Status) {
                 return `
       <span class="badge rounded-pill text-bg-secondary d-inline-flex align-items-center">
@@ -166,12 +172,10 @@
       </span>
     `;
             }
-
             let badgeClass = 'secondary';
             let icon = 'question-circle';
             let label = updateStatus.Status;
             let message = updateStatus.Message;
-
             switch (updateStatus.Status.toLowerCase()) {
                 case 'updated':
                     badgeClass = 'success';
@@ -193,7 +197,6 @@
                     icon = 'question-circle';
                     label = 'Unknown';
             }
-
             // Don't show empty messages
             if (!message || message.trim() === '') {
                 return `
@@ -203,7 +206,6 @@
         </span>
       `;
             }
-
             // Show messages with tooltip
             return `
         <div class="d-flex align-items-center">
@@ -217,26 +219,22 @@
         </div>
       `;
         }
-
         // Format date
         function formatDate(dateStr) {
             try {
                 // If it's a number or numeric string, treat as Unix timestamp (seconds)
                 const isUnixTS = !isNaN(dateStr) || (typeof dateStr === 'string' && /^\d+$/.test(dateStr));
-
                 if (isUnixTS) {
                     // Convert seconds to milliseconds
                     const timestampMs = parseInt(dateStr) * 1000;
                     return new Date(timestampMs).toLocaleString();
                 }
-
                 // For ISO date strings and other valid date formats
                 return new Date(dateStr).toLocaleString();
             } catch (e) {
                 return 'N/A';
             }
         }
-
         // Get stack update status for a specific stack
         async function fetchStackUpdateStatus(stackId) {
             try {
@@ -249,49 +247,40 @@
                         StackID: stackId
                     })
                 });
-
                 const data = await response.json();
-
                 if (!data.success) {
                     throw new Error(data.error || 'Failed to fetch update status');
                 }
-
                 return data.data;
             } catch (error) {
                 console.error('Error fetching update status for stack', stackId, error);
                 return null;
             }
         }
-
         // Add a delay helper function
         function sleep(ms) {
             return new Promise(resolve => setTimeout(resolve, ms));
         }
-
-        // Load stacks data with throttled status requests
-        async function loadStacks() {
+        // Load Portainer stacks data with throttled status requests
+        async function loadPortainerStacks() {
             try {
                 // Clear any previous error messages
-                document.getElementById('stacks-table').innerHTML = `
+                document.getElementById('portainer-stacks-table').innerHTML = `
             <tr><td colspan="6" class="text-center py-5">Loading stacks data...</td></tr>
         `;
-
                 // Get stacks data
                 const response = await fetch('/api/portainer/stacks');
                 const data = await response.json();
-
                 if (!data.success) {
                     throw new Error(data.error || 'Failed to fetch stack data');
                 }
-
                 if (!data.data || data.data.length === 0) {
-                    document.getElementById('stacks-table').innerHTML = `
+                    document.getElementById('portainer-stacks-table').innerHTML = `
                 <tr><td colspan="6" class="text-center py-5 text-bg-info">
                 No stacks found
                 </td></tr>`;
                     return;
                 }
-
                 // Create table with loading placeholders first
                 const tableHTML = data.data.map(stack => `
             <tr class="align-middle">
@@ -305,20 +294,15 @@
                 <td>${getStatusBadge(stack.Status)}</td>
             </tr>
         `).join('');
-
-                document.getElementById('stacks-table').innerHTML = tableHTML;
-
+                document.getElementById('portainer-stacks-table').innerHTML = tableHTML;
                 // Configure throttling (adjust these values!)
                 const REQUEST_DELAY_MS = 500;  // Delay between requests
                 const MAX_CONCURRENT_REQUESTS = 1;  // Only 1 at a time for serial execution
-
                 // Process status updates one-by-one with delay
                 for (let i = 0; i < data.data.length; i++) {
                     const stack = data.data[i];
-
                     // Fetch status for this stack
                     const statusData = await fetchStackUpdateStatus(stack.Id);
-
                     // Update UI
                     const cell = document.getElementById(`status-${stack.Id}`);
                     if (cell) {
@@ -327,25 +311,66 @@
                             Message: 'Failed to load status'
                         });
                     }
-
                     // Add delay before next request (except after last one)
                     if (i < data.data.length - 1) {
                         await sleep(REQUEST_DELAY_MS);
                     }
                 }
-
             } catch (error) {
-                console.error('Error fetching stacks:', error);
-                document.getElementById('stacks-table').innerHTML = `
+                console.error('Error fetching Portainer stacks:', error);
+                document.getElementById('portainer-stacks-table').innerHTML = `
             <tr><td colspan="6" class="text-center py-5 text-bg-danger">
             Error loading stacks: ${error.message}
             </td></tr>`;
             }
         }
-        
-        // Initial load
-        window.addEventListener('load', loadStacks);
+        // Load Docker Compose stacks data
+        async function loadDockerStacks() {
+            try {
+                // Clear any previous error messages
+                document.getElementById('docker-stacks-table').innerHTML = `
+            <tr><td colspan="5" class="text-center py-5">Loading stacks data...</td></tr>
+        `;
+                // Get stacks data from the Docker Compose endpoint
+                const response = await fetch('/api/docker-compose/stacks');
+                const data = await response.json();
+                // Note: The API now returns an array directly, not wrapped in { success: true, data: [...] }
+                const stacks = Array.isArray(data) ? data : (data.data || []);
+                if (!stacks || stacks.length === 0) {
+                    document.getElementById('docker-stacks-table').innerHTML = `
+                <tr><td colspan="5" class="text-center py-5 text-bg-info">
+                No stacks found
+                </td></tr>`;
+                    return;
+                }
+                // Create table for Docker Compose stacks
+                const tableHTML = stacks.map(stack => `
+            <tr class="align-middle">
+                <td><strong>${stack.Name}</strong></td>
+                <td>
+                ${getUpdateBadge()} <!-- Loading badge as placeholder until update status is implemented -->
+                </td>
+                <td>${stack.UpdatePolicy || 'N/A'}</td>
+                <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${stack.ConfigFiles || 'N/A'}">
+                    ${stack.ConfigFiles || 'N/A'}
+                </td>
+                <td>${getDockerStatusBadge(stack.Status)}</td>
+            </tr>
+        `).join('');
+                document.getElementById('docker-stacks-table').innerHTML = tableHTML;
+            } catch (error) {
+                console.error('Error fetching Docker Compose stacks:', error);
+                document.getElementById('docker-stacks-table').innerHTML = `
+            <tr><td colspan="5" class="text-center py-5 text-bg-danger">
+            Error loading stacks: ${error.message}
+            </td></tr>`;
+            }
+        }
+        // Initial load for both tables
+        window.addEventListener('load', () => {
+            loadPortainerStacks();
+            loadDockerStacks();
+        });
     </script>
 </body>
-
 </html>
