@@ -1,3 +1,4 @@
 docker-compose.yml
 data/supervisord.pid
 data/supervisord.log
+test:ingore.ps1

@@ -4,6 +4,8 @@ services:
     ports:
       - 8080:8080 # Exposes HTTP 
     restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock 
     environment:
       # Auto Update Settings
       AutoUpdateDefaultMode: AutoUpdate # Can be: OnlyNTFY, AutoUpdate, DoNotUpdate

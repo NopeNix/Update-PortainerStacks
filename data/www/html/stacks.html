@@ -240,7 +240,7 @@
         // Get stack update status for a specific stack
         async function fetchStackUpdateStatus(stackId) {
             try {
-                const response = await fetch('/api/stack-update-status', {
+                const response = await fetch('/api/portainer/stack-update-status', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

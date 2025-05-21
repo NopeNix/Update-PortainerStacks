@@ -59,7 +59,7 @@ Start-PodeServer -Verbose {
         
     
     # Portainer: StackUpdateStatus API
-    Add-PodeRoute -Method Post -Path "/api/stack-update-status" -ScriptBlock {
+    Add-PodeRoute -Method Post -Path "/api/portainer/stack-update-status" -ScriptBlock {
         . ($PSScriptRoot + "/../functions.ps1")
         try {
             $Bearer = Get-BearerToken
