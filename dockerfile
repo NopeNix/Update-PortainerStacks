@@ -31,5 +31,8 @@ RUN mkdir -p /var/log
 # Configure Supervisord
 RUN mkdir -p /var/log/supervisor
 
+# Create dir for DB
+RUN mkdir -p /data/db/
+
 # Set default command to run supervisord
 CMD ["supervisord", "-n", "-c", "/data/supervisord.conf"]

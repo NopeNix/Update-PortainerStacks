@@ -21,6 +21,8 @@ catch {
 # Get All Stack Status and strigger according action
 Write-Host ("Looking for Outdated Stacks on '$PortainerBaseDomain'`n (Default update Policy is '$env:AutoUpdateDefaultMode')") -ForegroundColor Blue
 
+$NotifiedStacks = Get-NotifiedStacks
+
 $Stacks | ForEach-Object {
     if ($null -eq $_.UpdatePolicy) {
         $_ | Add-Member -NotePropertyName "UpdatePolicy" -NotePropertyValue $env:AutoUpdateDefaultMode -Force
@@ -43,7 +45,6 @@ $Stacks | ForEach-Object {
                     }
                 }
                 "outdated" { 
-                    #$_ | Add-Member -NotePropertyName "LastSuccessfullUpdate" -NotePropertyValue (Get-Date)
                     Write-Host (" -> [ OUTDATED ] : " + $CurrentObj.Name + "(" + $CurrentObj.UpdatePolicy + ")" + $Status.Message) -ForegroundColor Yellow
                     if ($CurrentObj.UpdatePolicy -eq "AutoUpdate") {
                         try {
@@ -56,8 +57,14 @@ $Stacks | ForEach-Object {
                         }
                     }
                     elseif ($CurrentObj.UpdatePolicy -eq "NTFYOnly" -and $env:NTFYEnabled -eq $true) {   
-                        Send-NTFYMessage -Message ("'" + $CurrentObj.name + "' is outdated, a manual update is required")
-                        Write-Host ("  -> Notification has been sent") -ForegroundColor DarkGreen
+                        if ($NotifiedStacks -contains $CurrentObj.name) {
+                            Write-Host ("  -> Notification has already been sent")
+                        }
+                        else {
+                            Send-NTFYMessage -Message ("'" + $CurrentObj.name + "' is outdated, a manual update is required")
+                            Add-NotifiedStacks $CurrentObj.name
+                            Write-Host ("  -> Notification has been sent") -ForegroundColor DarkGreen
+                        }
                     }
                     elseif ($CurrentObj.UpdatePolicy -eq "NTFYOnly" -and $env:NTFYEnabled -eq $false) {
                         Write-Host ("  -> WARNING: You have set this Stack to send NTFY but NTFY is not enabled yet, please check you configuration (environment Variables)")
@@ -70,6 +77,11 @@ $Stacks | ForEach-Object {
                 "updated" { 
                     $_ | Add-Member -NotePropertyName "LastSuccessfullUpdate" -NotePropertyValue (Get-Date)
                     Write-Host (" -> [ UP2DATE  ] : " + $CurrentObj.Name + $Status.Message) -ForegroundColor Green
+                    if ($NotifiedStacks -contains $CurrentObj.Name) {
+                        Remove-NotifiedStacks -Names $CurrentObj.Name
+                        Send-NTFYMessage -Message ("'" + $CurrentObj.name + "' has been updated to latest version")
+
+                    }
                 }
                 Default {
                     Write-Host (" -> [  ERROR   ] : " + $CurrentObj.Name + ": Not Defined " + $Status.Message) -ForegroundColor Red

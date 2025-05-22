@@ -7,6 +7,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock # only needed for docker copmpose
       - /:/mnt/rootfs/:ro # only needed for docker compose and only if you want the update feature, otherwise only notifications
+      - db:/data/db
     environment:
       # Auto Update Settings
       AutoUpdateDefaultMode: AutoUpdate # Can be: NTFYOnly, AutoUpdate, DoNotUpdate
@@ -18,3 +19,6 @@ services:
       NTFYEnabled: $true # Can be $true or $false
       NTFYTopicURL: https://ntfy.yourdomain.com/Portainer-Updates
       NTFYToken: # Can also be left empty if there is none
+
+volumes:
+  db:

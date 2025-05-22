@@ -48,10 +48,10 @@ function Update-Stack {
     $Body = $Body | ConvertTo-Json
 
     try {
-        Invoke-RestMethod ($env:PortainerBaseAddress + "/api/portainer/stacks/" + $stack.id + "?endpointId=" + $Stack.EndpointId) -AllowUnencryptedAuthentication -Body $Body -Method Put -ErrorAction Stop | Out-Null
+        Invoke-RestMethod ($env:PortainerBaseAddress + "/api/stacks/" + $stack.id + "?endpointId=" + $Stack.EndpointId) -AllowUnencryptedAuthentication -Body $Body -Headers @{"X-API-KEY" = $env:PortainerAPIToken} -Method Put -ErrorAction Stop | Out-Null
     }
     catch {
-        Write-Error ("Update not possible: " + $_.Exception.Message)
+        Write-Error ("Update not possible: " + ($env:PortainerBaseAddress + "/api/portainer/stacks/" + $stack.id + "?endpointId=" + $Stack.EndpointId)  + " " + $_)
     }
 }
 
@@ -140,6 +140,109 @@ function Get-PortainerStacksUpdateStatus {
     Return $Status
 }
 
-function Disconnect-Token {
-    Invoke-RestMethod -SkipCertificateCheck ($env:PortainerBaseAddress + "/api/auth/logout") -AllowUnencryptedAuthentication -Body @{"X-API-KEY" = $env:PortainerAPIToken} -Method Post -ErrorAction Stop | Out-Null
+function Get-NotifiedStacks {
+    <#
+    .SYNOPSIS
+        Retrieves the list of names from the NotifiedStacks file.
+    .DESCRIPTION
+        Reads the content of the NotifiedStacks.txt file and returns the list of names.
+    .EXAMPLE
+        Get-NotifiedStacks
+    .OUTPUTS
+        Array of strings representing the names in the list.
+    #>
+    # Check if the file exists
+    if ((Test-Path "/data/db/NotifiedStacks.db") -eq $false) {
+        New-Item -Path "/data/db/NotifiedStacks.db" -ItemType File -Force
+    } 
+    # Read the content of the file and return it
+    $stacks = Get-Content -Path "/data/db/NotifiedStacks.db" -ErrorAction SilentlyContinue
+    if ($stacks) {
+        return $stacks
+    }
+    else {
+        Write-Output "No names found in the list."
+        return @()
+    }
+   
+}
+
+function Add-NotifiedStacks {
+    <#
+    .SYNOPSIS
+        Adds one or more names to the NotifiedStacks list.
+    .DESCRIPTION
+        Appends the provided names to the NotifiedStacks.txt file if they don't already exist.
+    .PARAMETER Names
+        One or more names to add to the list.
+    .EXAMPLE
+        Add-NotifiedStacks -Names "John", "Jane"
+    #>
+    param (
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
+        [string[]]$Names
+    )
+    # Get the current list of names
+    $currentStacks = Get-NotifiedStacks
+    $addedCount = 0
+    
+    foreach ($name in $Names) {
+        # Check if the name already exists in the list (case-insensitive)
+        if ($currentStacks -notcontains $name) {
+            # Append the name to the file
+            Add-Content -Path "/data/db/NotifiedStacks.db" -Value $name -ErrorAction Stop
+            Write-Output "Added '$name' to the list."
+            $addedCount++
+        }
+        else {
+            Write-Output "'$name' is already in the list. Skipping."
+        }
+    }
+    
+    if ($addedCount -eq 0) {
+        Write-Output "No new names were added."
+    }
+}
+
+function Remove-NotifiedStacks {
+    <#
+    .SYNOPSIS
+        Removes one or more names from the NotifiedStacks list.
+    .DESCRIPTION
+        Removes the specified names from the NotifiedStacks.txt file if they exist.
+    .PARAMETER Names
+        One or more names to remove from the list.
+    .EXAMPLE
+        Remove-NotifiedStacks -Names "John", "Jane"
+    #>
+    param (
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
+        [string[]]$Names
+    )
+    # Get the current list of names
+    $currentStacks = Get-NotifiedStacks
+    $removedCount = 0
+    
+    if ($currentStacks.Count -eq 0) {
+        Write-Output "The list is already empty. Nothing to remove."
+        return
+    }
+    
+    foreach ($name in $Names) {
+        # Check if the name exists in the list
+        if ($currentStacks -contains $name) {
+            # Filter out the name to remove and update the file
+            $updatedStacks = $currentStacks | Where-Object { $_ -ne $name }
+            Set-Content -Path "/data/db/NotifiedStacks.db" -Value $updatedStacks -ErrorAction Stop
+            Write-Output "Removed '$name' from the list."
+            $removedCount++
+        }
+        else {
+            Write-Output "'$name' is not in the list. Skipping."
+        }
+    }
+    
+    if ($removedCount -eq 0) {
+        Write-Output "No names were removed."
+    }
 }
