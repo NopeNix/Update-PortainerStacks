@@ -29,12 +29,9 @@ Start-PodeServer -Verbose {
             . ($PSScriptRoot + "/../functions.ps1")
             # Get Token
             try {
-                $Bearer = Get-BearerToken
-
                 # Get Stacks
                 try {
                     $stats = Get-PortainerStacks
-                    Disconnect-Token
                     Write-PodeJsonResponse -Value @{
                         success = $true
                         data    = $stats
@@ -89,9 +86,26 @@ Start-PodeServer -Verbose {
     Add-PodeRoute -Method Post -Path "/api/portainer/stack-update-status" -ScriptBlock {
         . ($PSScriptRoot + "/../functions.ps1")
         try {
-            $Bearer = Get-BearerToken
             $StackUpdateStatus = Get-PortainerStacksUpdateStatus -StackID $WebEvent.Data.StackID
-            Disconnect-Token
+            Write-PodeJsonResponse -Value @{
+                success = $true
+                data    = $StackUpdateStatus
+            }
+        }
+        catch {
+            Write-PodeJsonResponse -Value @{
+                success      = $false
+                error        = $_.Exception.Message
+                requested_id = $WebEvent.Data.StackID
+            } -StatusCode 500
+        }
+    }
+
+    # Docker Compose: StackUpdateStatus API
+    Add-PodeRoute -Method Get -Path "/api/docker-compose/stack-update-status" -ScriptBlock {
+        . ($PSScriptRoot + "/../functions.ps1")
+        try {
+            $StackUpdateStatus = bash ../dockcheck.sh | ConvertFrom-Json
             Write-PodeJsonResponse -Value @{
                 success = $true
                 data    = $StackUpdateStatus

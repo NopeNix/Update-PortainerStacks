@@ -5,14 +5,15 @@ services:
       - 8080:8080 # Exposes HTTP 
     restart: unless-stopped
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock 
+      - /var/run/docker.sock:/var/run/docker.sock # only needed for docker copmpose
+      - /:/mnt/rootfs/:ro # only needed for docker compose and only if you want the update feature, otherwise only notifications
     environment:
       # Auto Update Settings
-      AutoUpdateDefaultMode: AutoUpdate # Can be: OnlyNTFY, AutoUpdate, DoNotUpdate
+      AutoUpdateDefaultMode: AutoUpdate # Can be: NTFYOnly, AutoUpdate, DoNotUpdate
       CRON_SCHEDULE: "*/0 * * * *" # CRON String. Sets when the Programm is triggered
       # Portainer Settings
       PortainerBaseAddress: https://portainer.yourdomain.com # just the base address of your portainer
-      PortainerAPIKey: # Portainer API Key goes here
+      PortainerAPIToken:  # Portainer API Token goes here
       # NTFY Settings
       NTFYEnabled: $true # Can be $true or $false
       NTFYTopicURL: https://ntfy.yourdomain.com/Portainer-Updates
