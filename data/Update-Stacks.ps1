@@ -50,7 +50,7 @@ if ($null -ne $env:PortainerBaseAddress -and $env:PortainerBaseAddress.Trim(" ")
                         Write-Host -Message (" -> [ OUTDATED ] : " + $CurrentObj.Name + "(" + $CurrentObj.UpdatePolicy + ")" + $Status.Message) -ForegroundColor Yellow
                         if ($CurrentObj.UpdatePolicy -eq "AutoUpdate") {
                             try {
-                                Update-DockerComposeStack -Stack $CurrentObj -ErrorAction Stop
+                                Update-PortainerStack -Stack $CurrentObj -ErrorAction Stop
                                 Send-NTFYMessage -Message ("'" + $CurrentObj.name + "' is outdated, update has been triggered!")
                                 Write-Host -Message ("  -> Update has been triggered successfully!") -ForegroundColor Green
                             }
