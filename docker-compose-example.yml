@@ -1,5 +1,5 @@
 services:
-  updateportainerstacks:
+  whale-mate:
     image: nopenix/whale-mate:latest
     ports:
       - 8080:8080 # Exposes HTTP 
