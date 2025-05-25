@@ -30,7 +30,7 @@ function Send-NTFYMessage {
     }
 }
 
-function Update-Stack {
+function Update-PortainerStack {
     param (
         [Parameter(Mandatory = $true)]
         [PSCustomObject]
@@ -52,6 +52,26 @@ function Update-Stack {
     }
     catch {
         Write-Error ("Update not possible: " + ($env:PortainerBaseAddress + "/api/portainer/stacks/" + $stack.id + "?endpointId=" + $Stack.EndpointId)  + " " + $_)
+    }
+}
+
+function Update-DockerComposeStack {
+    param (
+        [Parameter(Mandatory = $true)]
+        [PSCustomObject]
+        $Stack
+    )
+    
+    # Pull Images
+    $Pull = docker compose -f ("/mnt/rootfs" + $Stack.ConfigFiles) pull > /dev/null 2>&1 | Out-Null
+    if ($? -eq $false ) {
+        Write-Error ("Was not able to pull stack Images " + $Pull)
+    }
+
+    # Up Images
+    $UpImage = docker compose -f ("/mnt/rootfs" + $Stack.ConfigFiles) up -d  > /dev/null 2>&1 | Out-Null
+    if ($? -eq $false ) {
+        Write-Error ("Was not able to bring Stack back online! " + $UpImage)
     }
 }
 
@@ -80,7 +100,7 @@ function Get-PortainerStacks {
     Return $Stacks
 }
 
-function Get-DockerStacks {
+function Get-DockerComposeStacks {
     $Stacks = (docker compose ls --format json | convertfrom-json)
     $Stacks = $Stacks | ForEach-Object {
         if ((Test-Path "/mnt/rootfs/")) {
@@ -245,4 +265,28 @@ function Remove-NotifiedStacks {
     if ($removedCount -eq 0) {
         Write-Output "No names were removed."
     }
+}
+
+function Add-UpdateLogEntry {
+    param (
+        [Parameter()]
+        [String]
+        $Message,
+
+        [Parameter()]
+        [switch]
+        $PrintToConsole,
+
+        [Parameter()]
+        [System.ConsoleColor]
+        $ForegroundColor = [System.ConsoleColor]::White
+    )
+    if ($PrintToConsole) {
+        Write-Host $Message -ForegroundColor $ForegroundColor
+    }
+    Add-Content -Path "/data/db/updatelog.log" -Value "$(Get-Date -Format '[yyyy-MM-dd HH:mm]') : $Message"
+}
+
+function Get-UpdateLog {
+    Return (Get-Content "/data/db/updatelog.log" -Raw)
 }

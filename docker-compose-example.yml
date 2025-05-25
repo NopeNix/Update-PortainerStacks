@@ -1,6 +1,6 @@
 services:
   updateportainerstacks:
-    image: nopenix/update-portainerstacks:latest
+    image: nopenix/whale-mate:latest
     ports:
       - 8080:8080 # Exposes HTTP 
     restart: unless-stopped

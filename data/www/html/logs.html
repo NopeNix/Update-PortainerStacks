@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Docker Logs</title>
+  <title>Whale Mate - Logs</title>
   <!-- Bootstrap 5 CDN -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- FontAwesome -->
@@ -21,24 +21,51 @@
     body[data-bs-theme="dark"] .theme-switch:hover {
       background-color: rgba(255,255,255,0.1);
     }
+    
+    /* Textbox style for logs */
+    .log-textbox {
+      font-family: monospace;
+      white-space: pre;
+      background-color: #1a1a1a;
+      color: #e0e0e0;
+      border: 1px solid #2d2d2d;
+      border-radius: 4px;
+      padding: 15px;
+      margin: 0;
+      overflow: auto;
+      min-height: 200px;
+      max-height: 70vh;
+    }
+    
+    /* Empty state styling */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 200px;
+      color: #6c757d;
+      text-align: center;
+    }
+    .empty-state i {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
   </style>
 </head>
 <body class="bg-dark text-light" data-bs-theme="dark">
-  <!-- Navbar -->
+  <!-- Your exact original navbar -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-secondary">
     <div class="container-fluid">
-      <!-- Logo -->
       <a class="navbar-brand" href="stacks.html">
         <i class="fas fa-ship me-2 text-primary"></i>
-        <span class="fw-bold">DCR MGR</span>
+        <span class="fw-bold">Whale Mate</span>
       </a>
       
-      <!-- Toggler for mobile -->
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#topNavbar">
         <span class="navbar-toggler-icon"></span>
       </button>
       
-      <!-- Menu -->
       <div class="collapse navbar-collapse justify-content-end" id="topNavbar">
         <ul class="navbar-nav align-items-center">
           <li class="nav-item mx-2">
@@ -58,76 +85,47 @@
     </div>
   </nav>
 
-  <!-- Page Content -->
   <div class="container py-4">
-    <h2 class="mb-4 text-center">📰 Docker Update Logs</h2>
-
-    <!-- Update Log -->
+    <h2 class="mb-4 text-center">📰 Update Logs</h2>
+    
+    <!-- Changed to simple textbox display -->
     <div class="card bg-dark border-light">
-      <div class="card-body">
-        <div class="list-group list-group-flush" id="update-log">
-          <div class="list-group-item text-center py-5">Loading logs...</div>
-        </div>
+      <div class="card-body p-0">
+        <pre class="log-textbox" id="update-log">Loading logs...</pre>
       </div>
     </div>
   </div>
 
-  <!-- Bootstrap JS Bundle -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- Dashboard Logic -->
   <script>
-    // Cookie handling functions
-    function setCookie(name, value, days) {
-      const d = new Date();
-      d.setTime(d.getTime() + (days*24*60*60*1000));
-      document.cookie = `${name}=${value};path=/;expires=${d.toUTCString()}`;
-    }
-
-    function getCookie(name) {
-      const v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
-      return v ? v[2] : null;
-    }
-
-    // Format date
-    function formatDate(dateStr) {
-      if (!dateStr) return 'N/A';
-      try {
-        const date = dateStr.includes('Z') ? new Date(dateStr) : new Date(dateStr + 'Z');
-        return date.toLocaleString();
-      } catch {
-        return dateStr;
-      }
-    }
-
-    // Load logs data
-    function loadLogs() {
-      fetch('/api/logs')
-        .then(response => response.json())
-        .then(data => {
-          if (!data.success) throw new Error(data.error || 'Failed to fetch log data');
-          
-          const logArea = document.getElementById('update-log');
-          logArea.innerHTML = data.data.map(entry => `
-            <div class="list-group-item bg-dark border-light">
-              <span class="badge bg-${entry.severity === 'success' ? 'success' : entry.severity === 'warning' ? 'warning' : 'info'} me-2 badge-${entry.severity === 'success' ? 'success' : entry.severity === 'warning' ? 'warning' : 'info'}">
-                ${entry.severity.toUpperCase()}
-              </span>
-              <small class="text-muted ms-2">${formatDate(entry.timestamp)}</small> – ${entry.message}
-            </div>
-          `).join('');
-        })
-        .catch(error => {
-          console.error('Error fetching logs:', error);
-          document.getElementById('update-log').innerHTML = `
-            <div class="list-group-item bg-dark border-light text-center">
-              Error loading logs: ${error.message}
-            </div>`;
-        });
-    }
-
-    // Initial load
-    window.addEventListener('load', loadLogs);
+    fetch('/api/logs')
+      .then(response => response.json())
+      .then(data => {
+        const logElement = document.getElementById('update-log');
+        
+        if (data.log === null) {
+          logElement.innerHTML = `<div class="empty-state">
+            <i class="fas fa-clock"></i>
+            <div>No logs available yet</div>
+            <small class="mt-2">Will appear after updater runs (CRON_SCHEDULE)</small>
+          </div>`;
+        } else if (typeof data.log === 'string') {
+          logElement.textContent = data.log;
+        } else if (Array.isArray(data.log)) {
+          logElement.textContent = data.log.join('\n');
+        } else {
+          throw new Error('Invalid log format received');
+        }
+      })
+      .catch(error => {
+        document.getElementById('update-log').innerHTML = 
+          `<div class="empty-state text-danger">
+            <i class="fas fa-exclamation-triangle"></i>
+            <div>Error loading logs</div>
+            <small class="mt-2">${error.message}</small>
+          </div>`;
+      });
   </script>
 </body>
 </html>

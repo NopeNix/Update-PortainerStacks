@@ -67,7 +67,7 @@ Start-PodeServer -Verbose {
         
             # Get Stacks
             try {
-                $stats = Get-DockerStacks
+                $stats = Get-DockerComposeStacks
                 Write-PodeJsonResponse -Value @{
                     success = $true
                     data    = $stats
@@ -120,14 +120,8 @@ Start-PodeServer -Verbose {
         }
     }
 
-    # Fake log API
+    # Log API
     Add-PodeRoute -Method Get -Path "/api/logs" -ScriptBlock {
-        $logs = @(
-            @{ timestamp = "2025-04-05 10:00:00"; message = "System started" },
-            @{ timestamp = "2025-04-05 10:15:00"; message = "Low RAM" },
-            @{ timestamp = "2025-04-05 10:20:00"; message = "Disk full" },
-            @{ timestamp = "2025-04-05 10:25:00"; message = "Restart triggered" }
-        )
-        Write-PodeJsonResponse -Value $logs
+        Write-PodeJsonResponse @{log = (Get-Content "/data/db/updatelog.log")}
     }
 }
