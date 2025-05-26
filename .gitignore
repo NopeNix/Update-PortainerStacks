@@ -2,3 +2,6 @@ docker-compose.yml
 data/supervisord.pid
 data/supervisord.log
 test:ingore.ps1
+docker-compose-test.yml
+teststack/**
+data/db/**
