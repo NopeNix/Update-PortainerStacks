@@ -150,11 +150,10 @@ if ($true) {
                             try {
                                 Update-DockerComposeStack -Stack $CurrentObj -ErrorAction Stop
                                 Send-NTFYMessage -Message ("'" + $CurrentObj.name + "' is outdated, update has been triggered!")
-                                Add-UpdateLogEntry ("'" + $CurrentObj.name + "' is outdated, update has been triggered!")
                                 Write-Host -Message ("  -> Update has been triggered successfully!") -ForegroundColor Green
                             }
                             catch {
-                                Add-UpdateLogEntry -PrintToConsole -Message ("  -> Error: " + $_.Exception.Message) -ForegroundColor Red
+                                Write-Host -Message ("  -> Error: " + $_.Exception.Message) -ForegroundColor Red
                             }
                         }
                         elseif ($CurrentObj.UpdatePolicy -eq "NTFYOnly" -and $env:NTFYEnabled -eq $true) {   
@@ -163,13 +162,12 @@ if ($true) {
                             }
                             else {
                                 Send-NTFYMessage -Message ("'" + $CurrentObj.name + "' is outdated, a manual update is required")
-                                Add-UpdateLogEntry ("'" + $CurrentObj.name + "' is outdated, a manual update is required")
                                 Add-NotifiedStacks $CurrentObj.name
                                 Write-Host -Message ("  -> Notification has been sent") -ForegroundColor DarkGreen
                             }
                         }
                         elseif ($CurrentObj.UpdatePolicy -eq "NTFYOnly" -and $env:NTFYEnabled -eq $false) {
-                            Add-UpdateLogEntry -PrintToConsole ("  -> WARNING: You have set this Stack to send NTFY but NTFY is not enabled yet, please check you configuration (environment Variables)")
+                            Write-Host ("  -> WARNING: You have set this Stack to send NTFY but NTFY is not enabled yet, please check you configuration (environment Variables)")
                             Write-Host -Message ("  -> Notification has not been sent") -ForegroundColor Red
                         }
                         elseif ($CurrentObj.UpdatePolicy -eq "DoNotUpdate") {
@@ -182,16 +180,15 @@ if ($true) {
                         if ($NotifiedStacks -contains $CurrentObj.Name) {
                             Remove-NotifiedStacks -Names $CurrentObj.Name
                             Send-NTFYMessage -Message ("'" + $CurrentObj.name + "' has been updated to latest version")
-                            Add-UpdateLogEntry ("'" + $CurrentObj.name + "' has been updated to latest version")
                         }
                     }
                     Default {
-                        Add-UpdateLogEntry -PrintToConsole -Message (" -> [  ERROR   ] : " + $CurrentObj.Name + ": Not Defined " + $Status.Message) -ForegroundColor Red
+                        Write-Host -Message (" -> [  ERROR   ] : " + $CurrentObj.Name + ": Not Defined " + $Status.Message) -ForegroundColor Red
                     }
                 }
             }
             catch {
-                Add-UpdateLogEntry -PrintToConsole -Message (" -> [  ERROR   ] : Stack '" + $CurrentObj.name + "'! " + $_.Exception.Message) -ForegroundColor Red
+                Write-Host -Message (" -> [  ERROR   ] : Stack '" + $CurrentObj.name + "'! " + $_.Exception.Message) -ForegroundColor Red
             }
         }
         elseif ($CurrentObj.UpdatePolicy -eq "DoNotUpdate") {

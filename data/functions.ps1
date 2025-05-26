@@ -5,6 +5,8 @@ function Send-NTFYMessage {
         $Message
     )
     
+    Add-UpdateLogEntry -Message $Message
+
     if ($env:NTFYEnabled -eq $false) {
         Break
     }
