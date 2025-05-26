@@ -1,7 +1,9 @@
 . ($PSScriptRoot + "/functions.ps1")
 
 # Prep
-$env:PortainerBaseAddress = $env:PortainerBaseAddress.TrimEnd("/")
+if ($null -ne $env:PortainerBaseAddress -or $env:PortainerBaseAddress -eq "") {
+    $env:PortainerBaseAddress = $env:PortainerBaseAddress.TrimEnd("/")
+}
 
 # Portainer Updates
 if ($null -ne $env:PortainerBaseAddress -and $env:PortainerBaseAddress.Trim(" ") -ne "") {

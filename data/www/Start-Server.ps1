@@ -1,5 +1,9 @@
 Import-Module Pode
-$env:PortainerBaseAddress = $env:PortainerBaseAddress.TrimEnd("/")
+
+# Prep
+if ($null -ne $env:PortainerBaseAddress -or $env:PortainerBaseAddress -eq "") {
+    $env:PortainerBaseAddress = $env:PortainerBaseAddress.TrimEnd("/")
+}
 
 Start-PodeServer -Verbose {
     Add-PodeEndpoint -Address * -Port 8080 -Protocol Http
