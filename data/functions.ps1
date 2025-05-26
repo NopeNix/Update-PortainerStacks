@@ -50,10 +50,10 @@ function Update-PortainerStack {
     $Body = $Body | ConvertTo-Json
 
     try {
-        Invoke-RestMethod ($env:PortainerBaseAddress + "/api/stacks/" + $stack.id + "?endpointId=" + $Stack.EndpointId) -AllowUnencryptedAuthentication -Body $Body -Headers @{"X-API-KEY" = $env:PortainerAPIToken} -Method Put -ErrorAction Stop | Out-Null
+        Invoke-RestMethod ($env:PortainerBaseAddress + "/api/stacks/" + $stack.id + "?endpointId=" + $Stack.EndpointId) -AllowUnencryptedAuthentication -Body $Body -Headers @{"X-API-KEY" = $env:PortainerAPIToken } -Method Put -ErrorAction Stop | Out-Null
     }
     catch {
-        Write-Error ("Update not possible: " + ($env:PortainerBaseAddress + "/api/portainer/stacks/" + $stack.id + "?endpointId=" + $Stack.EndpointId)  + " " + $_)
+        Write-Error ("Update not possible: " + ($env:PortainerBaseAddress + "/api/portainer/stacks/" + $stack.id + "?endpointId=" + $Stack.EndpointId) + " " + $_)
     }
 }
 
@@ -65,22 +65,22 @@ function Update-DockerComposeStack {
     )
     
     # Pull Images
-    $Pull = docker compose -f ("/mnt/rootfs" + $Stack.ConfigFiles) pull > /dev/null 2>&1 | Out-Null
+    $Pull = docker compose -f ("/mnt/rootfs" + $Stack.ConfigFiles) pull > /dev/null 2>&1
     if ($? -eq $false ) {
         Write-Error ("Was not able to pull stack Images " + $Pull)
     }
 
     # Up Images
-    $UpImage = docker compose -f ("/mnt/rootfs" + $Stack.ConfigFiles) up -d  > /dev/null 2>&1 | Out-Null
+    $UpImage = docker compose -f ("/mnt/rootfs" + $Stack.ConfigFiles) up -d  > /dev/null 2>&1
     if ($? -eq $false ) {
         Write-Error ("Was not able to bring Stack back online! " + $UpImage)
     }
 }
 
 function Get-PortainerStacks {
-    $Stacks = Invoke-RestMethod -SkipCertificateCheck ($env:PortainerBaseAddress + "/api/stacks") -AllowUnencryptedAuthentication -Body @{"X-API-KEY" = $env:PortainerAPIToken} -Method Get -ErrorAction Stop
+    $Stacks = Invoke-RestMethod -SkipCertificateCheck ($env:PortainerBaseAddress + "/api/stacks") -AllowUnencryptedAuthentication -Body @{"X-API-KEY" = $env:PortainerAPIToken } -Method Get -ErrorAction Stop
     $Stacks = $Stacks | ForEach-Object {
-        $StackFileContent = (Invoke-RestMethod -SkipCertificateCheck ($env:PortainerBaseAddress + "/api/stacks/" + $_.id + "/file") -AllowUnencryptedAuthentication -Body @{"X-API-KEY" = $env:PortainerAPIToken} -Method get -ErrorAction stop -ContentType "application/json").StackFileContent
+        $StackFileContent = (Invoke-RestMethod -SkipCertificateCheck ($env:PortainerBaseAddress + "/api/stacks/" + $_.id + "/file") -AllowUnencryptedAuthentication -Body @{"X-API-KEY" = $env:PortainerAPIToken } -Method get -ErrorAction stop -ContentType "application/json").StackFileContent
         $_ | Add-Member -NotePropertyName "StackFileContent" -NotePropertyValue $StackFileContent -Force
             
         if ($StackFileContent -imatch "#UpdatePolicy=AutoUpdate") {
@@ -125,7 +125,8 @@ function Get-DockerComposeStacks {
             catch {
                 Write-Host ("Error: unaböe tp read stack file '" + $_.ConfigFiles + "' because " + $_.Exception.Message)
             }
-        } else {
+        }
+        else {
             $_ | Add-Member -NotePropertyName "UpdatePolicy" -NotePropertyValue "NTFYOnly" -Force
         }
         
@@ -149,10 +150,10 @@ function Get-PortainerStacksUpdateStatus {
 
     switch ($PSCmdlet.ParameterSetName) {
         'Stack' {
-            $Status = Invoke-RestMethod -SkipCertificateCheck ($env:PortainerBaseAddress + "/api/stacks/" + $Stack.Id + "/images_status?refresh=1") -AllowUnencryptedAuthentication -Body @{"X-API-KEY" = $env:PortainerAPIToken} -Method Get -ErrorAction Stop
+            $Status = Invoke-RestMethod -SkipCertificateCheck ($env:PortainerBaseAddress + "/api/stacks/" + $Stack.Id + "/images_status?refresh=1") -AllowUnencryptedAuthentication -Body @{"X-API-KEY" = $env:PortainerAPIToken } -Method Get -ErrorAction Stop
         }
         'StackID' {
-            $Status = Invoke-RestMethod -SkipCertificateCheck ($env:PortainerBaseAddress + "/api/stacks/" + $StackID + "/images_status?refresh=1") -AllowUnencryptedAuthentication -Body @{"X-API-KEY" = $env:PortainerAPIToken} -Method Get -ErrorAction Stop
+            $Status = Invoke-RestMethod -SkipCertificateCheck ($env:PortainerBaseAddress + "/api/stacks/" + $StackID + "/images_status?refresh=1") -AllowUnencryptedAuthentication -Body @{"X-API-KEY" = $env:PortainerAPIToken } -Method Get -ErrorAction Stop
         }
         default {
             Write-Error 'No valid parameter provided. Must specify either -Stack or -ID.'
@@ -291,4 +292,30 @@ function Add-UpdateLogEntry {
 
 function Get-UpdateLog {
     Return (Get-Content "/data/db/updatelog.log" -Raw)
+}
+
+function Get-EscapedJsonString {
+    param (
+        [Parameter(Mandatory, ValueFromPipeline)]
+        [string]$InputString,
+
+        # Forces escaping of { and } even though they're technically legal in JSON strings
+        [switch]$EscapeCurlyBraces
+    )
+
+    process {
+        # Start with built-in escaping (handles quotes, backslashes, etc.)
+        $escaped = $InputString -replace '\\', '\\' `
+            -replace '"', '\"' `
+            -replace "`n", '\n' `
+            -replace "`r", '\r' `
+            -replace "`t", '\t'
+
+        # Optionally murder curly braces if requested
+        if ($EscapeCurlyBraces) {
+            $escaped = $escaped -replace '{', '\{' -replace '}', '\}'
+        }
+
+        $escaped
+    }
 }
