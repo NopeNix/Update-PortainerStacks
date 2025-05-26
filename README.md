@@ -1,6 +1,6 @@
-![GitHub Repo stars](https://img.shields.io/github/stars/nopenix/whale-mate)
+[![GitHub Repo stars](https://img.shields.io/github/stars/nopenix/whale-mate)](https://github.com/NopeNix/Whale-Mate)
 [![Build and Push to Docker Hub](https://github.com/NopeNix/whale-mate/actions/workflows/Build%20and%20Push%20to%20Docker%20Hub.yml/badge.svg)](https://github.com/NopeNix/whale-mate/actions/workflows/Build%20and%20Push%20to%20Docker%20Hub.yml)
-![Docker Pulls](https://img.shields.io/docker/pulls/nopenix/whale-mate)
+[![Docker Pulls](https://img.shields.io/docker/pulls/nopenix/whale-mate)](https://hub.docker.com/r/nopenix/whale-mate)
 
 
 # Whale Mate - Automated Portainer & Docker Compose Stack Updater
@@ -34,7 +34,7 @@ Whale Mate is an automated solution for managing and updating your Portainer sta
 Before using Whale Mate, you'll need:
 
 1. Docker and Docker Compose installed
-2. A running Portainer instance (for Portainer stack management, optional)
+2. A running Portainer instance **minimum Version 2.30.0** (for Portainer stack management, optional)
 3. (Optional) An NTFY server if you want notifications
 
 ## Installation
@@ -56,7 +56,7 @@ services:
     environment:
       # Auto Update Settings
       AutoUpdateDefaultMode: AutoUpdate # Can be: NTFYOnly, AutoUpdate, DoNotUpdate
-      CRON_SCHEDULE: "*/30 * * * *" # CRON String. Sets when the Programm is triggered 
+      CRON_SCHEDULE: "*/30 * * * *" # CRON String. Sets when the Programm is triggered in this example every 30min
       # Portainer Settings
       PortainerBaseAddress: https://portainer.yourdomain.com # just the base address of your portainer
       PortainerAPIToken: your-portainer-api-token # Portainer API Token goes here
@@ -70,7 +70,7 @@ volumes:
 
 2. Customize the environment variables (Optional):
    - `PortainerBaseAddress`: Your Portainer instance URL
-   - `PortainerAPIToken`: Generate this in Portainer (Settings > API)
+   - `PortainerAPIToken`: Generate this in Portainer (In Portainer: My Account > Access Tokens)
    - Adjust `CRON_SCHEDULE` for your needs (default every 5 mins)
    - Configure NTFY settings if desired
 
