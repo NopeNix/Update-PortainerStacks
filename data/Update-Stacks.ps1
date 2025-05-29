@@ -53,7 +53,7 @@ if ($null -ne $env:PortainerBaseAddress -and $env:PortainerBaseAddress.Trim(" ")
                         if ($CurrentObj.UpdatePolicy -eq "AutoUpdate") {
                             try {
                                 Update-PortainerStack -Stack $CurrentObj -ErrorAction Stop
-                                Send-NTFYMessage -Message ("'" + $CurrentObj.name + "' is outdated, update has been triggered!")
+                                Send-NTFYMessage -Message ("'" + $CurrentObj.name + "' is outdated, update has been triggered! (Portainer - " + ([System.Uri]$env:PortainerBaseAddress) + ")")
                                 Write-Host -Message ("  -> Update has been triggered successfully!") -ForegroundColor Green
                             }
                             catch {
@@ -65,7 +65,7 @@ if ($null -ne $env:PortainerBaseAddress -and $env:PortainerBaseAddress.Trim(" ")
                                 Write-Host -Message ("  -> Notification has already been sent")
                             }
                             else {
-                                Send-NTFYMessage -Message ("'" + $CurrentObj.name + "' is outdated, a manual update is required")
+                                Send-NTFYMessage -Message ("'" + $CurrentObj.name + "' is outdated, a manual update is required (Portainer - " + ([System.Uri]$env:PortainerBaseAddress) + ")")
                                 Add-NotifiedStacks $CurrentObj.name
                                 Write-Host -Message ("  -> Notification has been sent") -ForegroundColor DarkGreen
                             }
@@ -83,7 +83,7 @@ if ($null -ne $env:PortainerBaseAddress -and $env:PortainerBaseAddress.Trim(" ")
                         Write-Host -Message (" -> [ UP2DATE  ] : " + $CurrentObj.Name + $Status.Message) -ForegroundColor Green
                         if ($NotifiedStacks -contains $CurrentObj.Name) {
                             Remove-NotifiedStacks -Names $CurrentObj.Name
-                            Send-NTFYMessage -Message ("'" + $CurrentObj.name + "' has been updated to latest version")
+                            Send-NTFYMessage -Message ("'" + $CurrentObj.name + "' has been updated to latest version (Portainer - " + ([System.Uri]$env:PortainerBaseAddress) + ")")
 
                         }
                     }
@@ -151,7 +151,7 @@ if ($true) {
                         if ($CurrentObj.UpdatePolicy -eq "AutoUpdate") {
                             try {
                                 Update-DockerComposeStack -Stack $CurrentObj -ErrorAction Stop
-                                Send-NTFYMessage -Message ("'" + $CurrentObj.name + "' is outdated, update has been triggered!")
+                                Send-NTFYMessage -Message ("'" + $CurrentObj.name + "' is outdated, update has been triggered! (Docker Compose - " + ([System.Net.Dns]::GetHostName()) + ")")
                                 Write-Host -Message ("  -> Update has been triggered successfully!") -ForegroundColor Green
                             }
                             catch {
@@ -163,7 +163,7 @@ if ($true) {
                                 Write-Host -Message ("  -> Notification has already been sent")
                             }
                             else {
-                                Send-NTFYMessage -Message ("'" + $CurrentObj.name + "' is outdated, a manual update is required")
+                                Send-NTFYMessage -Message ("'" + $CurrentObj.name + "' is outdated, a manual update is required (Docker Compose - " + ([System.Net.Dns]::GetHostName()) + ")")
                                 Add-NotifiedStacks $CurrentObj.name
                                 Write-Host -Message ("  -> Notification has been sent") -ForegroundColor DarkGreen
                             }
@@ -181,7 +181,7 @@ if ($true) {
                         Write-Host -Message (" -> [ UP2DATE  ] : " + $CurrentObj.Name + $Status.Message) -ForegroundColor Green
                         if ($NotifiedStacks -contains $CurrentObj.Name) {
                             Remove-NotifiedStacks -Names $CurrentObj.Name
-                            Send-NTFYMessage -Message ("'" + $CurrentObj.name + "' has been updated to latest version")
+                            Send-NTFYMessage -Message ("'" + $CurrentObj.name + "' has been updated to latest version (Docker Compose - " + ([System.Net.Dns]::GetHostName()) + ")")
                         }
                     }
                     Default {
