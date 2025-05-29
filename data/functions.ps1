@@ -41,19 +41,30 @@ function Update-PortainerStack {
     
     # Update Stack
     $Body = @{
-        env              = ($Stack.Env | ConvertTo-Json)
+        env              = $Stack.Env 
         prune            = $true
         pullImage        = $true
         stackFileContent = $Stack.StackFileContent
-        "X-API-KEY"      = $env:PortainerAPIToken
     }
-    $Body = $Body | ConvertTo-Json
-
+    $Body = $Body | ConvertTo-Json -Depth 10
+    
     try {
-        Invoke-RestMethod ($env:PortainerBaseAddress + "/api/stacks/" + $stack.id + "?endpointId=" + $Stack.EndpointId) -AllowUnencryptedAuthentication -Body $Body -Headers @{"X-API-KEY" = $env:PortainerAPIToken } -Method Put -ErrorAction Stop | Out-Null
+        $Headers = @{
+            "X-API-KEY" = $env:PortainerAPIToken
+            "Content-Type" = "application/json"
+        }
+        
+        $Uri = ($env:PortainerBaseAddress + "/api/stacks/" + $stack.id + "?endpointId=" + $Stack.EndpointId)
+        
+        Invoke-RestMethod $Uri `
+            -Method Put `
+            -SkipCertificateCheck `
+            -Body $Body `
+            -Headers $Headers `
+            -ErrorAction Stop | Out-Null
     }
     catch {
-        Write-Error ("Update not possible: " + ($env:PortainerBaseAddress + "/api/portainer/stacks/" + $stack.id + "?endpointId=" + $Stack.EndpointId) + " " + $_)
+        Write-Error ("Update not possible: " + ($env:PortainerBaseAddress + "/api/stacks/" + $stack.id + "?endpointId=" + $Stack.EndpointId) + " " + $_)
     }
 }
 
