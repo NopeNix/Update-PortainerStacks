@@ -4,7 +4,11 @@
 
 
 # Whale Mate - Automated Portainer & Docker Compose Stack Updater
+**MINIMUM REQUIREMENTS:**
+- Portainer minimum Version 2.30.0
+- Portainer must be Business Edition [get a free max 3 node license for non commercial here](https://www.portainer.io/take-3)
 
+## Screenshot
 ![Screenshot Stacks](./img/Screenshot-Stacks.png)
 
 ## Introduction
